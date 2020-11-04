@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 
 //definições
 typedef enum {IO, HIGH, LOW} PRIORITY;
@@ -31,6 +32,9 @@ const char* getPriorityAsString(int);
 const char* getStatusAsString(int);
 const char* getIoTypeAsString(int);
 void printProcess(process*);
+int generateRandomPID();
+int generateRandomTime();
+
 
 const char* getPriorityAsString(int priority){
     switch(priority){
@@ -71,21 +75,32 @@ void printProcess(process* p){
     getIoTypeAsString(p->ioType));
 }
 
+int generateRandomPID(){
+    return rand() % 1000;
+}
+
+int generateRandomTime(){
+    return (rand() % 16) + 1;
+}
+
 int main(){
 
+    srand(time(0));
 
     queue* highPriorityQueue;
     queue* lowPriorityQueue;
     queue* IOPriorityQueue;
 
-    int amount;    
-    printf("\nInsira a quantidade de processos que deseja criar : ");
-    scanf("%d",&amount);
+    // int amount;    
+    // printf("\nInsira a quantidade de processos que deseja criar : ");
+    // scanf("%d",&amount);
 
-    int timeSlice;
-    printf("Insira o tamanho do quantum (time slice) : ");
-    scanf("%d",&timeSlice);
+    // int timeSlice;
+    // printf("Insira o tamanho do quantum (time slice) : ");
+    // scanf("%d",&timeSlice);
 
+    printf("%d\n",generateRandomPID());
+    printf("%d\n",generateRandomTime());
 
     return 0;
 }
