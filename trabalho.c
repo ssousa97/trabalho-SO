@@ -1,11 +1,22 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>
 #include <time.h>
+
+#define TRUE 1
+#define FALSE 0
+
+#define MAX_PROCESSES 10
+#define MAX_STARTING_TIME 16
+
+#define PRIORITY_SIZE 3
+#define IO_TYPE_SIZE 4
 
 //definições
 typedef enum {IO, HIGH, LOW} PRIORITY;
 typedef enum {DISK, MAGNETIC_TAPE, PRINTER, NONE} IO_TYPE;
-typedef enum {READY, BLOCKED, RUNNING} STATUS;
+typedef enum {READY, BLOCKED, RUNNING, FINISHED} STATUS;
 
 typedef struct {
 
@@ -18,13 +29,13 @@ typedef struct {
 
 } process;
 
-typedef struct  {
+typedef struct {
 
     process* p;
     struct queue* next;
     struct queue* front;
     struct queue* back;
-    
+
 } queue;
 
 //assinatura das funções
@@ -32,11 +43,15 @@ const char* getPriorityAsString(int);
 const char* getStatusAsString(int);
 const char* getIoTypeAsString(int);
 void printProcess(process*);
-int generateRandomPID();
+pid_t generateRandomPID();
+pid_t generateIncrementalPID();
 int generateRandomTime();
+int generateRandomPriority();
+int generateRandomIO();
+process* initRandomProcess(pid_t);
+process** initRandomProcesses();
 
-
-const char* getPriorityAsString(int priority){
+const char* getPriorityAsString(int priority) {
     switch(priority){
         case HIGH: return "High";
         case LOW: return "Low";
@@ -45,16 +60,17 @@ const char* getPriorityAsString(int priority){
     }
 }
 
-const char* getStatusAsString(int status){
+const char* getStatusAsString(int status) {
     switch(status){
         case READY: return "Ready";
         case RUNNING: return "Running";
         case BLOCKED: return "Blocked";
+        case FINISHED: return "Finished";
         default : break;
     }
 }
 
-const char* getIoTypeAsString(int io_type){
+const char* getIoTypeAsString(int io_type) {
     switch(io_type){
         case DISK : return "Disk";
         case MAGNETIC_TAPE : return "Magnetic Tape";
@@ -65,7 +81,7 @@ const char* getIoTypeAsString(int io_type){
 
 }
 
-void printProcess(process* p){
+void printProcess(process* p) {
     printf("PID : %d\nDuration : %d\nPPID : %d\nPRIORITY : %s\nSTATUS : %s\nIO TYPE : %s\n\n",
     p->pid,
     p->duration,
@@ -75,15 +91,57 @@ void printProcess(process* p){
     getIoTypeAsString(p->ioType));
 }
 
-int generateRandomPID(){
+pid_t generateRandomPID() {
     return rand() % 1000;
 }
 
-int generateRandomTime(){
-    return (rand() % 16) + 1;
+pid_t generateIncrementalPID() {
+    static pid_t lastPID = 0;
+    return ++lastPID;
 }
 
-int main(){
+int generateRandomTime() {
+    return (rand() % MAX_STARTING_TIME) + 1;
+}
+
+int generateRandomPriority() {
+    return rand() % PRIORITY_SIZE;
+}
+
+int generateRandomIO() {
+    return rand() % IO_TYPE_SIZE;
+}
+
+process* initRandomProcess(pid_t pid) {
+    process* proc = malloc(sizeof(process));
+    proc->duration = 0;
+    proc->pid = pid;
+    proc->ppid = 0;     // fix parent pid at 0, TODO change?
+    proc->priority = generateRandomPriority();
+    proc->status = READY;
+    proc->ioType = generateRandomIO();
+    return proc;
+}
+
+process** initRandomProcesses() {
+    // Allocate processes in the heap
+    process** initializedProcesses = calloc(MAX_PROCESSES, sizeof(process*));
+    for (pid_t pid = generateIncrementalPID(); pid < MAX_PROCESSES; pid = generateIncrementalPID()) {
+        initializedProcesses[pid] = initRandomProcess(pid);
+        printProcess(initializedProcesses[pid]);
+    }
+    return initializedProcesses;
+}
+
+int allProcessFinished(process** processes) {
+    for (int i = 0; i < MAX_PROCESSES; i++) {
+        if (processes[i]->status != FINISHED)
+            return FALSE;
+    }
+    return TRUE;
+}
+
+int main() {
 
     srand(time(0));
 
@@ -91,7 +149,13 @@ int main(){
     queue* lowPriorityQueue;
     queue* IOPriorityQueue;
 
-    // int amount;    
+    process** processes = initRandomProcesses();
+
+    // while(!allProcessFinished(processes)) {
+    //     // do something with the processes
+    // }
+
+    // int amount;
     // printf("\nInsira a quantidade de processos que deseja criar : ");
     // scanf("%d",&amount);
 
