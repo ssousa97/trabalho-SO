@@ -21,6 +21,8 @@ typedef struct  {
 
     process* p;
     struct queue* next;
+    struct queue* front;
+    struct queue* back;
     
 } queue;
 
@@ -71,14 +73,18 @@ void printProcess(process* p){
 
 int main(){
 
-    int amount;
-    
+
+    queue* highPriorityQueue;
+    queue* lowPriorityQueue;
+    queue* IOPriorityQueue;
+
+    int amount;    
     printf("\nInsira a quantidade de processos que deseja criar : ");
     scanf("%d",&amount);
 
-    for(int i = 0; i < amount; i++){
-
-    }
+    int timeSlice;
+    printf("Insira o tamanho do quantum (time slice) : ");
+    scanf("%d",&timeSlice);
 
 
     return 0;
