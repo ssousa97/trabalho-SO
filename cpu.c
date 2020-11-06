@@ -46,33 +46,46 @@ void addProcessToQueue(cpu_t* cpu, process* p) {
     }
 }
 
-int isAtStartingTime(process* p, int cycles) {
-    return p->startingTime == cycles;
-}
+void createStartingTimeTableCPU(cpu_t *cpu, process** processes) {
+    cpu->startingTimeTable = calloc(MAX_STARTING_TIME, sizeof(queue*));
+    for (int i = 0; i < MAX_STARTING_TIME; ++i)
+        cpu->startingTimeTable[i] = calloc(1, sizeof(queue));
 
-void addReadyProcessesToCPU(cpu_t* cpu, process** processes) {
     for (int i = 0; i < MAX_PROCESSES; ++i) {
-        process* currentProcess = processes[i];
-        if (isAtStartingTime(currentProcess, cpu->cycles)) {
-
-            printf("Adicionando processo %d a fila de processos prontos com alta prioridade\n",
-                currentProcess->pid);
-
-            currentProcess->status = READY;
-            insert(cpu->highPriorityQueue, currentProcess);
-
-        } else if(currentProcess->status == READY)
-            addProcessToQueue(cpu, currentProcess);
+        process* proc = processes[i];
+        insert(cpu->startingTimeTable[proc->startingTime], proc);
     }
 }
 
+void sendNewProcessToCPU(cpu_t* cpu) {
+    queue* queueNewProcesses = cpu->startingTimeTable[cpu->cycles];
+    while (queueNewProcesses->size > 0) {
+        process* proc = next(queueNewProcesses);
+        proc->status = READY;
+        insert(cpu->highPriorityQueue, proc);
+    }
+}
+
+void sendToLowPriorityQueue(cpu_t* cpu, process* proc) {
+    proc->elapsedTime = 0;
+    proc->status = READY;
+    insert(cpu->lowPriorityQueue, proc);
+}
+
 void manageProcessRunning(cpu_t* cpu) {
-    // Handle the running process
-    // 1. Check if it has already finished its duration
-    // 2. Check elapsedTime has reached the quantum
-    //      2.1. if yes, preemption
-    //      2.2. otherwise, stay running
-    // REMINDER: Make sure to set the status accordingly
+    process* currentProcess = cpu->executingProcess;
+    currentProcess->elapsedTime++;
+    if (hasProcessFinished(currentProcess)) {
+        currentProcess->status = FINISHED;
+        printf("Processo %d terminou, alocando CPU para outro processo\n",
+            currentProcess->pid);
+
+        dispatchProcessToCPU(cpu);
+    } else if (hasQuantumExpired(currentProcess, cpu->quantum)) {
+        sendToLowPriorityQueue(cpu, currentProcess);
+        dispatchProcessToCPU(cpu);
+    }
+    // Add handler for IO request
 }
 
 process* findNextProcess(cpu_t* cpu) {
@@ -90,6 +103,8 @@ void dispatchProcessToCPU(cpu_t* cpu) {
         printf("Enviando processo %d para a CPU\n", nextProcess->pid);
         cpu->executingProcess = nextProcess;
         cpu->executingProcess->status = RUNNING;
+    } else {
+        printf("Nenhum processo foi alocado na CPU no ciclo %d\n", cpu->cycles);
     }
 }
 
@@ -106,10 +121,6 @@ void dispatchProcessToCPU(cpu_t* cpu) {
 //         }
 //     }
 // }
-
-int hasIOFinished(process* IOProcess) {
-    return IOProcess->elapsedTime >= getIODuration(IOProcess->ioType);
-}
 
 void handleIOProcesses(cpu_t* cpu) {
     if (cpu->IOPriorityQueue->size > 0) {
