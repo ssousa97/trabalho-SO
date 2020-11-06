@@ -32,6 +32,19 @@ const char* getIoTypeAsString(int io_type) {
 
 }
 
+int getIODuration(int ioType) {
+    switch(ioType) {
+        case DISK:
+            return 5;
+        case MAGNETIC_TAPE:
+            return 15;
+        case PRINTER:
+            return 10;
+        default:
+            return 0;
+    }
+}
+
 void printProcess(process* p) {
     printf("=== Process Description ===\n");
     printf("PID: %d\nDuration: %d\nPPID: %d\nPRIORITY: %s\nSTATUS: %s\nIO TYPE: %s\n\n",
@@ -99,4 +112,10 @@ int allProcessFinished(process** processes) {
             return FALSE;
     }
     return TRUE;
+}
+
+void freeProcesses(process** processes) {
+    for (int i = 0; i < MAX_PROCESSES; ++i)
+        free(processes[i]);
+    free(processes);
 }

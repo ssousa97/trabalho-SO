@@ -18,6 +18,7 @@ typedef struct {
 
     int duration;
     int startingTime;
+    int elapsedTime;
     int pid;
     int ppid;
     int returnedFromIO;
@@ -31,6 +32,7 @@ typedef struct {
 const char* getPriorityAsString(int);
 const char* getStatusAsString(int);
 const char* getIoTypeAsString(int);
+int getIODuration(int);
 void printProcess(process*);
 pid_t generateRandomPID();
 pid_t generateIncrementalPID();
@@ -41,5 +43,7 @@ int generateRandomIO();
 process* initRandomProcess();
 process** initRandomProcesses();
 int allProcessFinished(process**);
+
+void freeProcesses(process**);
 
 #endif
