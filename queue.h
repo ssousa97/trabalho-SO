@@ -12,8 +12,10 @@ typedef struct {
 
 } queue;
 
-void insertIntoQueue(queue*,process*);
-process* nextFromQueue(queue*);
+void insert(queue*,process*);
+process* next(queue*);
 queue* initQueue();
+process* peek(queue*);
+process* peekIndex(queue*, int);
 
 #endif
