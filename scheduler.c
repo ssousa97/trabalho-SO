@@ -15,12 +15,18 @@ int main() {
     process** processes = initRandomProcesses();
 
     while(!allProcessFinished(processes)) {
-        printf(ANSI_COLOR_BLUE "Ciclo %d\n" ANSI_COLOR_RESET, cpu->cycles++);
+        cpu->cycles++;
+        printf(ANSI_COLOR_BLUE "Ciclo %d\n" ANSI_COLOR_RESET, cpu->cycles);
 
         addReadyProcessesToCPU(cpu, processes);
 
-        // handle ready processes
+        roundRobin(cpu);
+
+        if (cpu->cycles > 40) break;
     }
+
+    // freeCPU(cpu);
+    // freeProcesses(processes);
 
     // int amount;
     // printf("\nInsira a quantidade de processos que deseja criar : ");
