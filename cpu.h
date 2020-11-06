@@ -4,6 +4,8 @@
 #include "process.h"
 #include "queue.h"
 
+#define QUANTUM 5
+
 typedef struct {
 
     int cycles;
@@ -20,5 +22,8 @@ cpu_t* initCPU();
 void addProcessToQueueAfterIO(cpu_t*, process*);
 void addProcessToQueue(cpu_t*, process*);
 void addReadyProcessesToCPU(cpu_t*, process**);
+void roundRobin(cpu_t*);
+
+void freeCPU(cpu_t*);
 
 #endif
