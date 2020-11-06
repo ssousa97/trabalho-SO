@@ -47,8 +47,11 @@ int getIODuration(int ioType) {
 
 void printProcess(process* p) {
     printf("=== Process Description ===\n");
-    printf("PID: %d\nDuration: %d\nPPID: %d\nPRIORITY: %s\nSTATUS: %s\nIO TYPE: %s\n\n",
+    printf("PID: %d\nStarting Time: %d\nElapsed time: %d\nDuration: %d\nPPID: %d\n"
+           "PRIORITY: %s\nSTATUS: %s\nIO TYPE: %s\n\n",
         p->pid,
+        p->startingTime,
+        p->elapsedTime,
         p->duration,
         p->ppid,
         getPriorityAsString(p->priority),
