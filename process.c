@@ -89,7 +89,7 @@ process* initRandomProcess() {
     proc->duration = generateRandomDuration();
     proc->startingTime = generateRandomStartingTime();
     proc->pid = generateIncrementalPID();
-    proc->ppid = 0;     // fix parent pid at 0, TODO: change?
+    proc->ppid = 1;     // fix parent at PID 1
     proc->priority = generateRandomPriority();
     proc->status = NOT_STARTED;
     proc->ioType = generateRandomIO();
