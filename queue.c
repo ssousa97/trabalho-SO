@@ -8,6 +8,14 @@ queue* initQueue() {
     return q;
 }
 
+void reorder(queue* q, int index) {
+    for (; index < q->size - 1; ++index) {
+        q->processes[index] = q->processes[index+1];
+    }
+    q->processes[q->size] = NULL;
+    q->size--;
+}
+
 void insert(queue* q, process* p) {
     q->processes[q->size] = p;
     q->size++;
@@ -15,11 +23,7 @@ void insert(queue* q, process* p) {
 
 process* next(queue* q) {
     process* p = q->processes[0];
-    for (int i = 0; i < q->size - 1; ++i) {
-        q->processes[i] = q->processes[i+1];
-    }
-    q->processes[q->size] = NULL;
-    q->size--;
+    reorder(q, 0);
     return p;
 }
 
@@ -33,4 +37,9 @@ process* peekIndex(queue* q, int index) {
     if (q->size > index)
         return q->processes[index];
     return NULL;
+}
+
+void removeAt(queue* q, int index) {
+    if (q->size > index)
+        reorder(q, index);
 }
