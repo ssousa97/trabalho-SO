@@ -10,7 +10,7 @@ build: scheduler cpu queue process
 	$(CC) $(MAIN) $(DEPENDENCIES) -o $(BIN) $(FLAGS)
 
 debug: FLAGS=-g
-debug: build
+debug: clean build
 
 scheduler:
 	$(CC) -c scheduler.c $(FLAGS)
