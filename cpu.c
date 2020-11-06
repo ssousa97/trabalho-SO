@@ -85,7 +85,7 @@ void manageProcessRunning(cpu_t* cpu) {
         sendToLowPriorityQueue(cpu, currentProcess);
         dispatchProcessToCPU(cpu);
     }
-    // Add handler for IO request
+    // TODO: Add function to manage when elapsedTime reaches I/O starting time
 }
 
 process* findNextProcess(cpu_t* cpu) {
