@@ -49,7 +49,7 @@ void addProcessToQueue(cpu_t* cpu, process* p) {
 void createStartingTimeTableCPU(cpu_t *cpu, process** processes) {
     cpu->startingTimeTable = calloc(MAX_STARTING_TIME, sizeof(queue*));
     for (int i = 0; i < MAX_STARTING_TIME; ++i)
-        cpu->startingTimeTable[i] = calloc(1, sizeof(queue));
+        cpu->startingTimeTable[i] = initQueue();
 
     for (int i = 0; i < MAX_PROCESSES; ++i) {
         process* proc = processes[i];
@@ -58,11 +58,13 @@ void createStartingTimeTableCPU(cpu_t *cpu, process** processes) {
 }
 
 void sendNewProcessToCPU(cpu_t* cpu) {
-    queue* queueNewProcesses = cpu->startingTimeTable[cpu->cycles];
-    while (queueNewProcesses->size > 0) {
-        process* proc = next(queueNewProcesses);
-        proc->status = READY;
-        insert(cpu->highPriorityQueue, proc);
+    if (cpu->cycles < MAX_STARTING_TIME) {
+        queue* queueNewProcesses = cpu->startingTimeTable[cpu->cycles];
+        while (queueNewProcesses->size > 0) {
+            process* proc = next(queueNewProcesses);
+            proc->status = READY;
+            insert(cpu->highPriorityQueue, proc);
+        }
     }
 }
 
@@ -102,6 +104,7 @@ void dispatchProcessToCPU(cpu_t* cpu) {
     if (nextProcess) {
         printf("Enviando processo %d para a CPU\n", nextProcess->pid);
         cpu->executingProcess = nextProcess;
+        cpu->elapsedTime++;
         cpu->executingProcess->status = RUNNING;
     } else {
         printf("Nenhum processo foi alocado na CPU no ciclo %d\n", cpu->cycles);
