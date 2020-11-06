@@ -16,16 +16,19 @@ typedef enum {NOT_STARTED, READY, BLOCKED, RUNNING, FINISHED} STATUS;
 
 typedef struct {
 
+    // fields fixed at init
     int duration;
     int startingTime;
-    int elapsedTime;
     int pid;
     int ppid;
-    int returnedFromIO;
-    int preempted;
     PRIORITY priority;
     STATUS status;
     IO_TYPE ioType;
+
+    // variable fields
+    int elapsedTime;
+    int returnedFromIO;
+    int preempted;
 
 } process;
 
@@ -43,7 +46,9 @@ int generateRandomIO();
 process* initRandomProcess();
 process** initRandomProcesses();
 int allProcessFinished(process**);
-
+int hasQuantumExpired(process*, int);
+int hasProcessFinished(process*);
+int hasIOFinished(process*);
 void freeProcesses(process**);
 
 #endif

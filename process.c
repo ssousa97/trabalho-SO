@@ -117,6 +117,18 @@ int allProcessFinished(process** processes) {
     return TRUE;
 }
 
+int hasQuantumExpired(process* proc, int quantum) {
+    return proc->elapsedTime == quantum;
+}
+
+int hasProcessFinished(process* proc) {
+    return proc->elapsedTime == proc->duration;
+}
+
+int hasIOFinished(process* IOProcess) {
+    return IOProcess->elapsedTime >= getIODuration(IOProcess->ioType);
+}
+
 void freeProcesses(process** processes) {
     for (int i = 0; i < MAX_PROCESSES; ++i)
         free(processes[i]);
