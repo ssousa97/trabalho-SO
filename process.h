@@ -24,7 +24,7 @@ typedef struct {
     int ppid;
     PRIORITY priority;
     STATUS status;
-    IO_TYPE ioType;
+    IO_TYPE IOType;
 
     // variable fields
     int elapsedTimeCPU;
@@ -53,7 +53,6 @@ int hasQuantumExpired(process*, int);
 int hasProcessFinished(process*);
 int hasIOFinished(process*);
 int hasReachedIOTime(process*);
-void setProcessIOStatus(process*);
 void freeProcesses(process**);
 
 #endif

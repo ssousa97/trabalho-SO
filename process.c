@@ -32,8 +32,8 @@ const char* getIoTypeAsString(int io_type) {
 
 }
 
-int getIODuration(int ioType) {
-    switch(ioType) {
+int getIODuration(int IOType) {
+    switch(IOType) {
         case DISK:
             return 5;
         case MAGNETIC_TAPE:
@@ -48,17 +48,18 @@ int getIODuration(int ioType) {
 void printProcess(process* p) {
     printf("=== Process Description ===\n");
     printf("PID: %d\nStarting Time: %d\nElapsed time (CPU): %d\n"
-            "Elapsed time (IO): %d\nDuration: %d\nPPID: %d\n"
-            "PRIORITY: %s\nSTATUS: %s\nIO TYPE: %s\n\n",
+            "Elapsed time (IO): %d\nDuration: %d\nIO Starting time: %d\n"
+            "PPID: %d\nPRIORITY: %s\nSTATUS: %s\nIO TYPE: %s\n\n",
         p->pid,
         p->startingTime,
         p->elapsedTimeCPU,
         p->elapsedTimeIO,
         p->duration,
+        p->IOStartingTime,
         p->ppid,
         getPriorityAsString(p->priority),
         getStatusAsString(p->status),
-        getIoTypeAsString(p->ioType));
+        getIoTypeAsString(p->IOType));
 }
 
 // generate PID incrementally
@@ -94,12 +95,12 @@ process* initRandomProcess() {
     process* proc = malloc(sizeof(process));
     proc->duration = generateRandomDuration();
     proc->startingTime = generateRandomStartingTime();
-    proc->IOStartingTime = generateRandomIOStartingTime(proc->duration);
     proc->pid = generateIncrementalPID();
     proc->ppid = 1;     // fix parent at PID 1
     proc->priority = generateRandomPriority();
     proc->status = NOT_STARTED;
-    proc->ioType = generateRandomIO();
+    proc->IOType = generateRandomIO();
+    proc->IOStartingTime = proc->IOType != NONE ? (proc->duration) : -1;
     return proc;
 }
 
@@ -121,10 +122,6 @@ int allProcessFinished(process** processes) {
     return TRUE;
 }
 
-void setProcessIOStatus(process* proc) {
-    proc->status = BLOCKED;
-}
-
 int hasQuantumExpired(process* proc, int quantum) {
     return proc->elapsedTimeCPU == quantum;
 }
@@ -134,7 +131,7 @@ int hasProcessFinished(process* proc) {
 }
 
 int hasIOFinished(process* IOProcess) {
-    return IOProcess->elapsedTimeIO >= getIODuration(IOProcess->ioType);
+    return IOProcess->elapsedTimeIO >= getIODuration(IOProcess->IOType);
 }
 
 int hasReachedIOTime(process* proc) {
