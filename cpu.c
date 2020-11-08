@@ -37,8 +37,8 @@ void insertAfterReturnFromIO(cpu_t* cpu, process* p) {
 }
 
 void createStartingTimeTableCPU(cpu_t *cpu, process** processes) {
-    cpu->startingTimeTable = calloc(MAX_STARTING_TIME, sizeof(queue*));
-    for (int i = 0; i < MAX_STARTING_TIME; ++i)
+    cpu->startingTimeTable = calloc(MAX_STARTING_TIME+1, sizeof(queue*));
+    for (int i = 1; i < MAX_STARTING_TIME + 1; ++i)
         cpu->startingTimeTable[i] = initQueue();
 
     for (int i = 0; i < MAX_PROCESSES; ++i) {
@@ -67,8 +67,6 @@ void sendToLowPriorityQueue(cpu_t* cpu, process* proc) {
 
 void sendProcessToIOQueue(cpu_t* cpu, process* proc) {
     proc->status = BLOCKED;
-    printf("Enviando processo %d para a fila de %s\n", proc->pid,
-        getIoTypeAsString(proc->IOType));
     switch(proc->IOType) {
         case PRINTER:
             insert(cpu->PrinterQueue, proc);
@@ -85,10 +83,9 @@ void sendProcessToIOQueue(cpu_t* cpu, process* proc) {
 void manageProcessRunning(cpu_t* cpu) {
     process* currentProcess = cpu->executingProcess;
 
-    if (hasQuantumExpired(currentProcess, cpu->quantum)) {
-        sendToLowPriorityQueue(cpu, currentProcess);
-        dispatchNextProcessToCPU(cpu);
-    } else if (hasReachedIOTime(currentProcess)) {
+    if (hasReachedIOTime(currentProcess)) {
+        printf("Enviando processo %d para a fila de %s\n", currentProcess->pid,
+            getIoTypeAsString(currentProcess->IOType));
         sendProcessToIOQueue(cpu, currentProcess);
         dispatchNextProcessToCPU(cpu);
     } else if (hasProcessFinished(currentProcess)) {
@@ -97,9 +94,14 @@ void manageProcessRunning(cpu_t* cpu) {
             currentProcess->pid);
 
         dispatchNextProcessToCPU(cpu);
+    } else if (hasQuantumExpired(currentProcess, cpu->quantum)) {
+        printf(ANSI_COLOR_RED "Processo %d sofreu preempção! " ANSI_COLOR_RESET,
+            currentProcess->pid);
+        sendToLowPriorityQueue(cpu, currentProcess);
+        dispatchNextProcessToCPU(cpu);
+    } else {
+        currentProcess->elapsedTimeCPU++;
     }
-
-    currentProcess->elapsedTimeCPU++;
 }
 
 process* findNextProcess(cpu_t* cpu) {
@@ -119,6 +121,7 @@ void dispatchNextProcessToCPU(cpu_t* cpu) {
         cpu->executingProcess = nextProcess;
         cpu->executingProcess->status = RUNNING;
     } else {
+        cpu->executingProcess = NULL;
         printf("Nenhum processo foi alocado na CPU no ciclo %d\n", cpu->cycles);
     }
 }
@@ -142,13 +145,13 @@ void handleIOQueue(cpu_t* cpu, queue* IOQueue) {
 }
 
 void roundRobin(cpu_t* cpu) {
+    handleIOProcesses(cpu);
+
     if(cpu->executingProcess) {
         manageProcessRunning(cpu);
     } else {
         dispatchNextProcessToCPU(cpu);
     }
-
-    handleIOProcesses(cpu);
 }
 
 void freeCPU(cpu_t* cpu) {
