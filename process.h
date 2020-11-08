@@ -29,6 +29,7 @@ typedef struct {
     // variable fields
     int elapsedTimeCPU;
     int elapsedTimeIO;
+    int quantumCounter;
     // int returnedFromIO;
     // int preempted;
 
@@ -53,6 +54,7 @@ int hasQuantumExpired(process*, int);
 int hasProcessFinished(process*);
 int hasIOFinished(process*);
 int hasReachedIOTime(process*);
+void resetQuantum(process*);
 void freeProcesses(process**);
 
 #endif
