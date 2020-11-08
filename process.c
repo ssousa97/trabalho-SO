@@ -100,7 +100,9 @@ process* initRandomProcess() {
     proc->priority = generateRandomPriority();
     proc->status = NOT_STARTED;
     proc->IOType = generateRandomIO();
-    proc->IOStartingTime = proc->IOType != NONE ? (proc->duration) : -1;
+    proc->IOStartingTime = proc->IOType != NONE
+        ? generateRandomIOStartingTime(proc->duration)
+        : -1;
     return proc;
 }
 
@@ -123,7 +125,7 @@ int allProcessFinished(process** processes) {
 }
 
 int hasQuantumExpired(process* proc, int quantum) {
-    return proc->elapsedTimeCPU == quantum;
+    return proc->quantumCounter == quantum;
 }
 
 int hasProcessFinished(process* proc) {
@@ -136,6 +138,10 @@ int hasIOFinished(process* IOProcess) {
 
 int hasReachedIOTime(process* proc) {
     return proc->elapsedTimeCPU == proc->IOStartingTime;
+}
+
+void resetQuantum(process* proc) {
+    proc->quantumCounter = 0;
 }
 
 void freeProcesses(process** processes) {
