@@ -7,6 +7,7 @@
 #define TRUE 1
 #define FALSE 0
 
-#define MAX_PROCESSES 10
-#define MAX_STARTING_TIME 16
-#define MAX_DURATION 10
+#define MAX_PROCESSES 3
+#define MAX_STARTING_TIME 5
+#define MAX_DURATION 5
+#define QUANTUM 3

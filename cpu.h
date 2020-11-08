@@ -4,8 +4,6 @@
 #include "process.h"
 #include "queue.h"
 
-#define QUANTUM 5
-
 typedef struct {
 
     int cycles;
