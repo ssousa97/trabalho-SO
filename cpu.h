@@ -10,12 +10,13 @@ typedef struct {
 
     int cycles;
     int quantum;
-    int elapsedTime;
     process* executingProcess;
     queue** startingTimeTable;
     queue* highPriorityQueue;
     queue* lowPriorityQueue;
-    queue* IOPriorityQueue;
+    queue* PrinterQueue;
+    queue* MagneticTapeQueue;
+    queue* DiskQueue;
 
 } cpu_t;
 
@@ -27,8 +28,9 @@ void sendNewProcessToCPU(cpu_t*);
 void sendToLowPriorityQueue(cpu_t*, process*);
 void manageProcessRunning(cpu_t*);
 process* findNextProcess(cpu_t*);
-void dispatchProcessToCPU(cpu_t*);
+void dispatchNextProcessToCPU(cpu_t*);
 void handleIOProcesses(cpu_t*);
+void handleIOQueue(cpu_t*, queue*);
 void roundRobin(cpu_t*);
 
 void freeCPU(cpu_t*);
