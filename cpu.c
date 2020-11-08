@@ -48,7 +48,7 @@ void createStartingTimeTableCPU(cpu_t *cpu, process** processes) {
 }
 
 void sendNewProcessToCPU(cpu_t* cpu) {
-    if (cpu->cycles < MAX_STARTING_TIME) {
+    if (cpu->cycles < MAX_STARTING_TIME + 1) {
         queue* queueNewProcesses = cpu->startingTimeTable[cpu->cycles];
         while (queueNewProcesses->size > 0) {
             process* proc = next(queueNewProcesses);
@@ -86,6 +86,8 @@ void manageProcessRunning(cpu_t* cpu) {
     if (hasReachedIOTime(currentProcess)) {
         printf("Enviando processo %d para a fila de %s\n", currentProcess->pid,
             getIoTypeAsString(currentProcess->IOType));
+
+        resetQuantum(currentProcess);
         sendProcessToIOQueue(cpu, currentProcess);
         dispatchNextProcessToCPU(cpu);
     } else if (hasProcessFinished(currentProcess)) {
@@ -93,14 +95,17 @@ void manageProcessRunning(cpu_t* cpu) {
         printf("Processo %d terminou, alocando CPU para outro processo\n",
             currentProcess->pid);
 
+        resetQuantum(currentProcess);
         dispatchNextProcessToCPU(cpu);
     } else if (hasQuantumExpired(currentProcess, cpu->quantum)) {
         printf(ANSI_COLOR_RED "Processo %d sofreu preempção! " ANSI_COLOR_RESET,
             currentProcess->pid);
+        resetQuantum(currentProcess);
         sendToLowPriorityQueue(cpu, currentProcess);
         dispatchNextProcessToCPU(cpu);
     } else {
         currentProcess->elapsedTimeCPU++;
+        currentProcess->quantumCounter++;
     }
 }
 
@@ -118,6 +123,7 @@ void dispatchNextProcessToCPU(cpu_t* cpu) {
     if (nextProcess) {
         printf("Enviando processo %d para a CPU\n", nextProcess->pid);
         nextProcess->elapsedTimeCPU++;
+        nextProcess->quantumCounter++;
         cpu->executingProcess = nextProcess;
         cpu->executingProcess->status = RUNNING;
     } else {
@@ -138,8 +144,14 @@ void handleIOQueue(cpu_t* cpu, queue* IOQueue) {
         IOProcess->elapsedTimeIO++;
         if (hasIOFinished(IOProcess)) {
             next(IOQueue);
-            IOProcess->status = READY;
-            insertAfterReturnFromIO(cpu, IOProcess);
+            if(hasProcessFinished(IOProcess)) {
+                IOProcess->status = FINISHED;
+                printf("Processo %d retornou de IO: %s, mas já terminou sua execução na CPU\n",
+                    IOProcess->pid, getIoTypeAsString(IOProcess->IOType));
+            } else {
+                IOProcess->status = READY;
+                insertAfterReturnFromIO(cpu, IOProcess);
+            }
         }
     }
 }
