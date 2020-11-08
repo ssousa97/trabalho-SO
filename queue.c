@@ -12,7 +12,7 @@ void reorder(queue* q, int index) {
     for (; index < q->size - 1; ++index) {
         q->processes[index] = q->processes[index+1];
     }
-    q->processes[q->size] = NULL;
+    q->processes[q->size-1] = NULL;
     q->size--;
 }
 
