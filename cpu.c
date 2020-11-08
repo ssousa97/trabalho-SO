@@ -19,7 +19,7 @@ cpu_t* initCPU() {
 }
 
 void insertAfterReturnFromIO(cpu_t* cpu, process* p) {
-    switch(p->ioType) {
+    switch(p->IOType) {
         case DISK:
             printf("Inserindo processo %d na fila de" ANSI_COLOR_RED " baixa " ANSI_COLOR_RESET "prioridade, "
                    "retornando de IO: Disk\n", p->pid);
@@ -28,7 +28,7 @@ void insertAfterReturnFromIO(cpu_t* cpu, process* p) {
         case MAGNETIC_TAPE:
         case PRINTER:
             printf("Inserindo processo %d na fila de" ANSI_COLOR_GREEN " alta " ANSI_COLOR_RESET "prioridade, "
-                   "retornando de IO: %s\n", p->pid, getIoTypeAsStrig(p->ioType));
+                   "retornando de IO: %s\n", p->pid, getIoTypeAsString(p->IOType));
 
             insert(cpu->highPriorityQueue, p);
         case NONE:
@@ -66,9 +66,10 @@ void sendToLowPriorityQueue(cpu_t* cpu, process* proc) {
 }
 
 void sendProcessToIOQueue(cpu_t* cpu, process* proc) {
+    proc->status = BLOCKED;
     printf("Enviando processo %d para a fila de %s\n", proc->pid,
-        getIoTypeAsString(proc->ioType));
-    switch(proc->ioType) {
+        getIoTypeAsString(proc->IOType));
+    switch(proc->IOType) {
         case PRINTER:
             insert(cpu->PrinterQueue, proc);
             break;
@@ -83,14 +84,13 @@ void sendProcessToIOQueue(cpu_t* cpu, process* proc) {
 
 void manageProcessRunning(cpu_t* cpu) {
     process* currentProcess = cpu->executingProcess;
-    currentProcess->elapsedTimeCPU++;
 
     if (hasQuantumExpired(currentProcess, cpu->quantum)) {
         sendToLowPriorityQueue(cpu, currentProcess);
         dispatchNextProcessToCPU(cpu);
     } else if (hasReachedIOTime(currentProcess)) {
-        setProcessIOStatus(currentProcess);
         sendProcessToIOQueue(cpu, currentProcess);
+        dispatchNextProcessToCPU(cpu);
     } else if (hasProcessFinished(currentProcess)) {
         currentProcess->status = FINISHED;
         printf("Processo %d terminou, alocando CPU para outro processo\n",
@@ -98,6 +98,8 @@ void manageProcessRunning(cpu_t* cpu) {
 
         dispatchNextProcessToCPU(cpu);
     }
+
+    currentProcess->elapsedTimeCPU++;
 }
 
 process* findNextProcess(cpu_t* cpu) {
