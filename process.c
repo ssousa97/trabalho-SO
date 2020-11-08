@@ -33,6 +33,8 @@ const char* getIoTypeAsString(int io_type) {
 }
 
 int getIODuration(int IOType) {
+    // Retorna duração de tempo de cada IO
+    // TODO: talvez colocar esses tempos como define
     switch(IOType) {
         case DISK:
             return 5;
@@ -46,6 +48,7 @@ int getIODuration(int IOType) {
 }
 
 void printProcess(process* p) {
+    // Printa descrição do processo
     printf("=== Process Description ===\n");
     printf("PID: %d\nStarting Time: %d\nElapsed time (CPU): %d\n"
             "Elapsed time (IO): %d\nDuration: %d\nIO Starting time: %d\n"
@@ -62,36 +65,43 @@ void printProcess(process* p) {
         getIoTypeAsString(p->IOType));
 }
 
-// generate PID incrementally
 pid_t generateIncrementalPID() {
+    // Retorna um PID incremental
     static pid_t lastPID = 0;
     return ++lastPID;
 }
 
 // Randomness generators
 int generateRandomDuration() {
+    // Retorna tempo de duração aleatorio do processo na CPU
     return (rand() % MAX_DURATION) + 1;
 }
 
 int generateRandomStartingTime() {
+    // Retorna em qual ciclo o processo deverá ser iniciado
     return (rand() % MAX_STARTING_TIME) + 1;
 }
 
 int generateRandomIOStartingTime(int duration) {
+    // Retorna em qual ciclo, após o processo entrar na CPU,
+    // deverá começar a operação de IO.
+    // Leva em conta que o tempo de inicio não poderá ser após
+    // o tempo máximo de duração do processo
     return (rand() % (duration)) + 1;
 }
 
-
 int generateRandomPriority() {
+    // Retorna prioridade aleatoria
     return rand() % PRIORITY_SIZE;
 }
 
 int generateRandomIO() {
+    // Retorna um IO aleatorio
     return rand() % IO_TYPE_SIZE;
 }
 
-// Process initializers
 process* initRandomProcess() {
+    // Inicializa processo aleatório individualmente
     process* proc = malloc(sizeof(process));
     proc->duration = generateRandomDuration();
     proc->startingTime = generateRandomStartingTime();
@@ -107,7 +117,7 @@ process* initRandomProcess() {
 }
 
 process** initRandomProcesses() {
-    // Allocate processes in the heap
+    // Inicializa processos aleatórios que serão utilizados na simulação
     process** initializedProcesses = calloc(MAX_PROCESSES, sizeof(process*));
     for (int i = 0; i < MAX_PROCESSES; ++i) {
         initializedProcesses[i] = initRandomProcess();
@@ -117,6 +127,7 @@ process** initRandomProcesses() {
 }
 
 int allProcessFinished(process** processes) {
+    // Retorna true se todos os processos tiverem terminado
     for (int i = 0; i < MAX_PROCESSES; i++) {
         if (processes[i]->status != FINISHED)
             return FALSE;

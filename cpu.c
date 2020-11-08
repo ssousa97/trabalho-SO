@@ -6,6 +6,7 @@
 #include "util.h"
 
 cpu_t* initCPU() {
+    // Inicializa CPU e as filas necessárias para o funcionamento dela
     cpu_t* cpu = malloc(sizeof(cpu_t));
     cpu->cycles = 0;
     cpu->quantum = QUANTUM;
@@ -19,6 +20,11 @@ cpu_t* initCPU() {
 }
 
 void insertAfterReturnFromIO(cpu_t* cpu, process* p) {
+    // Insere um processo `p` que retornou de IO na fila que deve ser inserido
+    // de acordo com a especificação do trabalho:
+    //  Disco: baixa prioridade
+    //  Fita magnética: alta prioridade
+    //  Impressora: alta prioridade
     switch(p->IOType) {
         case DISK:
             printf("Inserindo processo %d na fila de" ANSI_COLOR_RED " baixa " ANSI_COLOR_RESET "prioridade, "
@@ -37,6 +43,19 @@ void insertAfterReturnFromIO(cpu_t* cpu, process* p) {
 }
 
 void createStartingTimeTableCPU(cpu_t *cpu, process** processes) {
+    // Para evitar que tenhamos que checar se ainda existem processos
+    // no estado NOT_STARTED a cada ciclo, criamos uma "hash table"
+    // que mapeia o tempo de início de cada processo numa fila de processos
+    // Com os processos:
+    //      1: startingTime = 3
+    //      2: startingTime = 1
+    //      3: startingTime = 3
+    // Denotando {1,3} como uma fila que tem 1 na primeira posição
+    // e 3 na segunda posição
+    // E MAX_STARTING_TIME de 5
+    // Teríamos uma "tabela" do tipo:
+    // filas: [{}, {2}, {}, {1,3}, {}, {}]
+    // index:  0 ,  1 , 2 ,   3  , 4 , 5
     cpu->startingTimeTable = calloc(MAX_STARTING_TIME+1, sizeof(queue*));
     for (int i = 1; i < MAX_STARTING_TIME + 1; ++i)
         cpu->startingTimeTable[i] = initQueue();
@@ -48,6 +67,11 @@ void createStartingTimeTableCPU(cpu_t *cpu, process** processes) {
 }
 
 void sendNewProcessToCPU(cpu_t* cpu) {
+    // Envia os processos criados em createStartingTimeTableCPU
+    // para a CPU quando estiver no ciclo certo
+    // A cada ciclo, esse método é chamado para que a fila referente
+    // àquele ciclo seja processada e os processos que tenham que entrar
+    // naquele momento sejam enviados a CPU
     if (cpu->cycles < MAX_STARTING_TIME + 1) {
         queue* queueNewProcesses = cpu->startingTimeTable[cpu->cycles];
         while (queueNewProcesses->size > 0) {
@@ -59,13 +83,14 @@ void sendNewProcessToCPU(cpu_t* cpu) {
 }
 
 void sendToLowPriorityQueue(cpu_t* cpu, process* proc) {
-    // proc->elapsedTime = 0;
+    // Envia processo `proc` para a fila de baixa prioridade
     printf("Enviando processo %d para a fila de baixa prioridade\n", proc->pid);
     proc->status = READY;
     insert(cpu->lowPriorityQueue, proc);
 }
 
 void sendProcessToIOQueue(cpu_t* cpu, process* proc) {
+    // Envia processo `proc` para a fila de IO correspondente
     proc->status = BLOCKED;
     switch(proc->IOType) {
         case PRINTER:
@@ -81,6 +106,16 @@ void sendProcessToIOQueue(cpu_t* cpu, process* proc) {
 }
 
 void manageProcessRunning(cpu_t* cpu) {
+    // Lida com o processo que estiver rodando na CPU nesse momento
+    // Existem 4 possibilidades do que pode acontecer com um processo
+    // que está na CPU:
+    //      1. Ter chegado o tempo de início de IO
+    //      2. O processo ter terminado (proc->elapsedTime == proc->duration)
+    //      3. O quantum dele ter acabado (processo sofre preempção)
+    //      4. Nenhum dos anteriores e o processo continua na CPU
+    //
+    // Se qualquer uma das condições 1-3 for satisfeita,
+    // devemos resetar o quantum gasto pelo processo e alocar um novo processo na CPU
     process* currentProcess = cpu->executingProcess;
 
     if (hasReachedIOTime(currentProcess)) {
@@ -92,8 +127,8 @@ void manageProcessRunning(cpu_t* cpu) {
         dispatchNextProcessToCPU(cpu);
     } else if (hasProcessFinished(currentProcess)) {
         currentProcess->status = FINISHED;
-        printf("Processo %d terminou, alocando CPU para outro processo\n",
-            currentProcess->pid);
+        printf(ANSI_COLOR_GREEN "Processo %d terminou, alocando CPU para outro processo\n"
+               ANSI_COLOR_RESET, currentProcess->pid);
 
         resetQuantum(currentProcess);
         dispatchNextProcessToCPU(cpu);
@@ -110,6 +145,9 @@ void manageProcessRunning(cpu_t* cpu) {
 }
 
 process* findNextProcess(cpu_t* cpu) {
+    // Retorna qual é o próximo processo a ser alocado na CPU
+    // Primeiro precisa checar se tem algum na fila de alta prioridade
+    // e só depois checar se tem algum na fila de baixa prioridade
     process* proc = NULL;
     if (cpu->highPriorityQueue->size > 0)
         proc = next(cpu->highPriorityQueue);
@@ -119,6 +157,7 @@ process* findNextProcess(cpu_t* cpu) {
 }
 
 void dispatchNextProcessToCPU(cpu_t* cpu) {
+    // Envia o próximo processo da fila para a CPU
     process* nextProcess = findNextProcess(cpu);
     if (nextProcess) {
         printf("Enviando processo %d para a CPU\n", nextProcess->pid);
@@ -133,12 +172,18 @@ void dispatchNextProcessToCPU(cpu_t* cpu) {
 }
 
 void handleIOProcesses(cpu_t* cpu) {
+    // Lida com a fila de processos em IO
     handleIOQueue(cpu, cpu->PrinterQueue);
     handleIOQueue(cpu, cpu->MagneticTapeQueue);
     handleIOQueue(cpu, cpu->DiskQueue);
 }
 
 void handleIOQueue(cpu_t* cpu, queue* IOQueue) {
+    // Lida com cada fila de IO
+    // Se tiver alguém na fila,
+    // precisamos checar se esse processo já gastou o tempo necessário de espera
+    // Se tiver, precisamos mandá-lo se volta para a fila correspondente da CPU
+    // (levando em conta as especificações do trabalho)
     if (IOQueue->size > 0) {
         process* IOProcess = peek(IOQueue);
         IOProcess->elapsedTimeIO++;
@@ -146,8 +191,9 @@ void handleIOQueue(cpu_t* cpu, queue* IOQueue) {
             next(IOQueue);
             if(hasProcessFinished(IOProcess)) {
                 IOProcess->status = FINISHED;
-                printf("Processo %d retornou de IO: %s, mas já terminou sua execução na CPU\n",
-                    IOProcess->pid, getIoTypeAsString(IOProcess->IOType));
+                printf("Processo %d retornou de IO: %s, mas já terminou sua execução na CPU\n"
+                       ANSI_COLOR_GREEN "Processo %d terminado\n" ANSI_COLOR_RESET,
+                    IOProcess->pid, getIoTypeAsString(IOProcess->IOType), IOProcess->pid);
             } else {
                 IOProcess->status = READY;
                 insertAfterReturnFromIO(cpu, IOProcess);
@@ -157,6 +203,10 @@ void handleIOQueue(cpu_t* cpu, queue* IOQueue) {
 }
 
 void roundRobin(cpu_t* cpu) {
+    // Processo principal a ser executado
+    // Primeiro lida com as filas de IO
+    // E depois lida com o processo rodando, se houver algum
+    // Ou coloca o próximo processo para rodar, se não houver algum
     handleIOProcesses(cpu);
 
     if(cpu->executingProcess) {
@@ -167,6 +217,7 @@ void roundRobin(cpu_t* cpu) {
 }
 
 void freeCPU(cpu_t* cpu) {
+    // Libera os espaços de memória alocados
     free(cpu->executingProcess);
     free(cpu->highPriorityQueue);
     free(cpu->lowPriorityQueue);
