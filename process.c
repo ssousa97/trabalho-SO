@@ -47,11 +47,13 @@ int getIODuration(int ioType) {
 
 void printProcess(process* p) {
     printf("=== Process Description ===\n");
-    printf("PID: %d\nStarting Time: %d\nElapsed time: %d\nDuration: %d\nPPID: %d\n"
-           "PRIORITY: %s\nSTATUS: %s\nIO TYPE: %s\n\n",
+    printf("PID: %d\nStarting Time: %d\nElapsed time (CPU): %d\n"
+            "Elapsed time (IO): %d\nDuration: %d\nPPID: %d\n"
+            "PRIORITY: %s\nSTATUS: %s\nIO TYPE: %s\n\n",
         p->pid,
         p->startingTime,
-        p->elapsedTime,
+        p->elapsedTimeCPU,
+        p->elapsedTimeIO,
         p->duration,
         p->ppid,
         getPriorityAsString(p->priority),
@@ -66,10 +68,6 @@ pid_t generateIncrementalPID() {
 }
 
 // Randomness generators
-pid_t generateRandomPID() {
-    return rand() % 1000;
-}
-
 int generateRandomDuration() {
     return (rand() % MAX_DURATION) + 1;
 }
@@ -77,6 +75,11 @@ int generateRandomDuration() {
 int generateRandomStartingTime() {
     return (rand() % MAX_STARTING_TIME) + 1;
 }
+
+int generateRandomIOStartingTime(int duration) {
+    return (rand() % (duration)) + 1;
+}
+
 
 int generateRandomPriority() {
     return rand() % PRIORITY_SIZE;
@@ -91,6 +94,7 @@ process* initRandomProcess() {
     process* proc = malloc(sizeof(process));
     proc->duration = generateRandomDuration();
     proc->startingTime = generateRandomStartingTime();
+    proc->IOStartingTime = generateRandomIOStartingTime(proc->duration);
     proc->pid = generateIncrementalPID();
     proc->ppid = 1;     // fix parent at PID 1
     proc->priority = generateRandomPriority();
@@ -117,16 +121,24 @@ int allProcessFinished(process** processes) {
     return TRUE;
 }
 
+void setProcessIOStatus(process* proc) {
+    proc->status = BLOCKED;
+}
+
 int hasQuantumExpired(process* proc, int quantum) {
-    return proc->elapsedTime == quantum;
+    return proc->elapsedTimeCPU == quantum;
 }
 
 int hasProcessFinished(process* proc) {
-    return proc->elapsedTime == proc->duration;
+    return proc->elapsedTimeCPU == proc->duration;
 }
 
 int hasIOFinished(process* IOProcess) {
-    return IOProcess->elapsedTime >= getIODuration(IOProcess->ioType);
+    return IOProcess->elapsedTimeIO >= getIODuration(IOProcess->ioType);
+}
+
+int hasReachedIOTime(process* proc) {
+    return proc->elapsedTimeCPU == proc->IOStartingTime;
 }
 
 void freeProcesses(process** processes) {

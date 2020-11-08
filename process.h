@@ -19,6 +19,7 @@ typedef struct {
     // fields fixed at init
     int duration;
     int startingTime;
+    int IOStartingTime;
     int pid;
     int ppid;
     PRIORITY priority;
@@ -26,9 +27,10 @@ typedef struct {
     IO_TYPE ioType;
 
     // variable fields
-    int elapsedTime;
-    int returnedFromIO;
-    int preempted;
+    int elapsedTimeCPU;
+    int elapsedTimeIO;
+    // int returnedFromIO;
+    // int preempted;
 
 } process;
 
@@ -41,6 +43,7 @@ pid_t generateRandomPID();
 pid_t generateIncrementalPID();
 int generateRandomDuration();
 int generateRandomStartingTime();
+int generateRandomIOStartingTime();
 int generateRandomPriority();
 int generateRandomIO();
 process* initRandomProcess();
@@ -49,6 +52,8 @@ int allProcessFinished(process**);
 int hasQuantumExpired(process*, int);
 int hasProcessFinished(process*);
 int hasIOFinished(process*);
+int hasReachedIOTime(process*);
+void setProcessIOStatus(process*);
 void freeProcesses(process**);
 
 #endif
