@@ -20,27 +20,14 @@ int main() {
         cpu->cycles++;
         printf(ANSI_COLOR_BLUE "Ciclo %d\n" ANSI_COLOR_RESET, cpu->cycles);
 
-        // sendReadyProcessesToCPU(cpu, processes);
         sendNewProcessToCPU(cpu);
 
         roundRobin(cpu);
 
-        if (cpu->cycles > 40) break;
     }
 
     freeCPU(cpu);
     freeProcesses(processes);
-
-    // int amount;
-    // printf("\nInsira a quantidade de processos que deseja criar : ");
-    // scanf("%d",&amount);
-
-    // int timeSlice;
-    // printf("Insira o tamanho do quantum (time slice) : ");
-    // scanf("%d",&timeSlice);
-
-    // printf("%d\n",generateRandomPID());
-    // printf("%d\n",generateRandomTime());
 
     return 0;
 }
