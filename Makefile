@@ -28,4 +28,4 @@ run: build
 	./$(BIN)
 
 clean:
-	rm $(BIN) *.o
+	rm -f $(BIN) *.o
