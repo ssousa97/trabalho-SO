@@ -30,8 +30,6 @@ typedef struct {
     int elapsedTimeCPU;
     int elapsedTimeIO;
     int quantumCounter;
-    // int returnedFromIO;
-    // int preempted;
 
 } process;
 
